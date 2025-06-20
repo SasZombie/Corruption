@@ -44,7 +44,6 @@ struct glitchEffect{
     int thiccness;
     int endPoint;
     int R, G, B;
-
 };
 
 int main()
@@ -58,15 +57,17 @@ int main()
         return 1;
     }
 
-    int lines = 10;
+    const int lines = 20;
+    const int maxLength = 200;
     std::vector<glitchEffect> effects;
     
     for(size_t i = 0; i < lines; ++i)
     {
         int chosenLine = getRandomInt(10, 890);
         int startingPoint = getRandomInt(10, 1580);
-        int reminaing = width - startingPoint;
-        int length = getRandomInt(std::min(50, reminaing), std::max(50, reminaing));
+        int remaining = width - startingPoint;
+        remaining = std::min(remaining, maxLength);
+        int length = getRandomInt(std::min(50, remaining), std::max(50, remaining));
         int endPoint = length + startingPoint;
         int thiccness = getRandomInt(2, 6);
         const auto& [R, G, B] = getRandomColor();
@@ -74,8 +75,8 @@ int main()
         effects.emplace_back(chosenLine, startingPoint, length, thiccness, endPoint, R, G, B);
     }
     
-    int offsetGreen = 3;
-    int offsetBlue = 3;
+    const int offsetGreen = 3;
+    const int offsetBlue = 3;
 
 
     for (int y = 0; y < height; ++y)
