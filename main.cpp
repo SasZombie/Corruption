@@ -42,22 +42,20 @@ struct Slider
 int main()
 {
     // Vars
-    Image img = LoadImage("test.png");
+    // Image img = LoadImage("test.png");
 
-    const size_t imageWidth = img.width, imageHeight = img.height;
-    constexpr size_t widthUtils = 200;
+    size_t windowWidth = 800, windowHeight = 600;
+    constexpr size_t widthUtils = 230;
     constexpr size_t px = 15, py = 15;
     constexpr size_t elemPaddX = 30, elemPaddY = 3 * py;
-    const size_t windowWidth = imageWidth + widthUtils, windowHeight = imageHeight;
 
-    InitWindow(windowWidth, img.height, "Image Viewer");
+    InitWindow(windowWidth, windowHeight, "Image Viewer");
     SetTargetFPS(60);
 
     // Shaders
-    Texture2D texture = LoadTextureFromImage(img);
-    UnloadImage(img);
+    Texture2D texture;
 
-    RenderTexture2D target = LoadRenderTexture(windowWidth, imageHeight);
+    RenderTexture2D target;
 
     Shader shader = LoadShader(0, "shaders/effects.fs");
     int redAddLoc = GetShaderLocation(shader, "redAdd");
@@ -66,13 +64,12 @@ int main()
     int redShiftXLoc = GetShaderLocation(shader, "redShiftX");
     int blueShiftXLoc = GetShaderLocation(shader, "blueShiftX");
     int greenShiftXLoc = GetShaderLocation(shader, "greenShiftX");
-    
+
     int redShiftYLoc = GetShaderLocation(shader, "redShiftY");
     int blueShiftYLoc = GetShaderLocation(shader, "blueShiftY");
     int greenShiftYLoc = GetShaderLocation(shader, "greenShiftY");
 
-    if (redAddLoc == -1 || greenAddLoc == -1 || blueAddLoc == -1 || blueShiftXLoc == -1 || greenShiftXLoc == -1 || redShiftXLoc == -1 
-        || blueShiftYLoc == -1 || greenShiftYLoc == -1 || redShiftYLoc == -1)
+    if (redAddLoc == -1 || greenAddLoc == -1 || blueAddLoc == -1 || blueShiftXLoc == -1 || greenShiftXLoc == -1 || redShiftXLoc == -1 || blueShiftYLoc == -1 || greenShiftYLoc == -1 || redShiftYLoc == -1)
     {
         std::cerr << "Shader uniform not found\n";
     }
@@ -83,7 +80,7 @@ int main()
 
     Rectangle sliderPatR{px, py, 5, 255};
     Circle circlePatR{px + sliderPatR.width / 2, sliderPatR.y + sliderPatR.height, 10, RED};
-    
+
     Rectangle sliderPatG{sliderPatR.x + sliderPatR.width + elemPaddX, py, 5, 255};
     Circle circlePatG{sliderPatG.x + sliderPatG.width / 2, sliderPatG.y + sliderPatG.height, 10, GREEN};
 
@@ -95,42 +92,69 @@ int main()
     sliders[2] = {255, circlePatB, sliderPatB, blueAddLoc};
 
     const float currentY = elemPaddY + sliderPatR.height + sliderPatR.y;
-    
-    //X axis
+
+    // X axis
     Rectangle sliderShiftR{px, elemPaddY + sliderPatR.height + sliderPatR.y, 5, 500};
     Circle circleShiftR{px + sliderShiftR.width / 2, sliderShiftR.y + sliderShiftR.height, 10, RED};
-    
+
     Rectangle sliderShiftG{sliderShiftR.x + sliderShiftR.width + elemPaddX, elemPaddY + sliderPatR.height + sliderPatR.y, 5, 500};
     Circle circleShiftG{sliderShiftG.x + sliderShiftG.width / 2, sliderShiftG.y + sliderShiftG.height, 10, GREEN};
-    
+
     Rectangle sliderShiftB{sliderShiftG.x + sliderShiftG.width + elemPaddX, elemPaddY + sliderPatG.height + sliderPatG.y, 5, 500};
     Circle circleShiftB{sliderShiftB.x + sliderShiftB.width / 2, sliderShiftB.y + sliderShiftB.height, 10, BLUE};
-   
 
-    //Y axis
+    // Y axis
     Rectangle sliderShiftRY{sliderShiftB.x + sliderShiftB.width + elemPaddX, currentY, 5, 500};
     Circle circleShiftRY{sliderShiftRY.x + sliderShiftRY.width / 2, sliderShiftRY.y + sliderShiftRY.height, 10, RED};
-   
+
     Rectangle sliderShiftGY{sliderShiftRY.x + sliderShiftRY.width + elemPaddX, currentY, 5, 500};
     Circle circleShiftGY{sliderShiftGY.x + sliderShiftGY.width / 2, sliderShiftGY.y + sliderShiftGY.height, 10, GREEN};
-   
+
     Rectangle sliderShiftBY{sliderShiftGY.x + sliderShiftGY.width + elemPaddX, currentY, 5, 500};
     Circle circleShiftBY{sliderShiftBY.x + sliderShiftBY.width / 2, sliderShiftBY.y + sliderShiftBY.height, 10, BLUE};
-
-    
 
     sliders[3] = {500, circleShiftR, sliderShiftR, redShiftXLoc};
     sliders[4] = {500, circleShiftG, sliderShiftG, greenShiftXLoc};
     sliders[5] = {500, circleShiftB, sliderShiftB, blueShiftXLoc};
-    
+
     sliders[6] = {500, circleShiftRY, sliderShiftRY, redShiftYLoc};
     sliders[7] = {500, circleShiftGY, sliderShiftGY, greenShiftYLoc};
     sliders[8] = {500, circleShiftBY, sliderShiftBY, blueShiftYLoc};
-    
+
     Slider *selected = nullptr;
 
+    bool hasImage = false;
     while (!WindowShouldClose())
     {
+        if (IsFileDropped())
+        {
+            FilePathList droppedFiles = LoadDroppedFiles();
+
+            if (droppedFiles.count > 0)
+            {
+                const char *filePath = droppedFiles.paths[0];
+
+                Image img = LoadImage(filePath);
+
+                windowHeight = img.height;
+                windowWidth = img.width + widthUtils;
+                
+                if (hasImage)
+                {
+                    UnloadTexture(texture);
+                }
+                
+                texture = LoadTextureFromImage(img);
+                target = LoadRenderTexture(windowWidth, windowHeight);
+
+                UnloadImage(img);
+                hasImage = true;
+                SetWindowSize(windowWidth, windowHeight);
+            }
+
+            UnloadDroppedFiles(droppedFiles);
+        }
+
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             const Vector2 mpos = GetMousePosition();
@@ -148,7 +172,7 @@ int main()
         {
             Image image = LoadImageFromTexture(target.texture);
             ExportImage(image, "output.png");
-            UnloadImage(image); 
+            UnloadImage(image);
         }
 
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
@@ -180,28 +204,39 @@ int main()
 
         BeginDrawing();
         ClearBackground(BLACK);
-        DrawRectangleLines(0, 0, widthUtils, imageHeight, WHITE);
-
-        BeginTextureMode(target);
-            BeginShaderMode(shader);
-                DrawTexture(texture, widthUtils, 0, WHITE);
-            EndShaderMode();
-        EndTextureMode();
-
-        DrawTextureRec(target.texture, {0, 0, static_cast<float>(windowWidth), -static_cast<float>(imageHeight)}, {0, 0}, WHITE);
-
-        for (const auto &slider : sliders)
+        if (!hasImage)
         {
-            DrawRectangleRec(slider.zone, WHITE);
-            DrawCircle(slider.pointer.cx, slider.pointer.cy, slider.pointer.radius, slider.pointer.c);
-            //TODO: Make the px - 5 to be actually dynamic in regard to number of digits
-            DrawText(std::to_string(static_cast<int>(slider.valValue * slider.maxValue)).c_str(), slider.zone.x - 5, slider.zone.y + slider.zone.height + py, 20, WHITE);
+            DrawText("Drag and drop an image file here", 10, 10, 20, DARKGRAY);
+        }
+        else
+        {
+
+            DrawRectangleLines(0, 0, widthUtils, windowHeight, WHITE);
+
+            BeginTextureMode(target);
+            BeginShaderMode(shader);
+            DrawTexture(texture, widthUtils, 0, WHITE);
+            EndShaderMode();
+            EndTextureMode();
+
+            DrawTextureRec(target.texture, {0, 0, static_cast<float>(windowWidth), -static_cast<float>(windowHeight)}, {0, 0}, WHITE);
+
+            for (const auto &slider : sliders)
+            {
+                DrawRectangleRec(slider.zone, WHITE);
+                DrawCircle(slider.pointer.cx, slider.pointer.cy, slider.pointer.radius, slider.pointer.c);
+                // TODO: Make the px - 5 to be actually dynamic in regard to number of digits
+                DrawText(std::to_string(static_cast<int>(slider.valValue * slider.maxValue)).c_str(), slider.zone.x - 5, slider.zone.y + slider.zone.height + py, 20, WHITE);
+            }
         }
 
         EndDrawing();
     }
 
     UnloadShader(shader);
-    UnloadTexture(texture);
+    if (hasImage)
+    {
+        UnloadTexture(texture);
+    }
     CloseWindow();
 }
