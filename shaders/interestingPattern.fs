@@ -4,10 +4,10 @@ in vec2 fragTexCoord;
 out vec4 fragColor;
 
 uniform sampler2D texture0;
-uniform float redShift;
+uniform float redAdd;
 
 void main() {
     vec4 color = texture(texture0, fragTexCoord);
-    color.r = mod(color.r + redShift, 1.0);  
+    color.r = mod(color.r + redAdd, 1.0);  
     fragColor = color;
 }

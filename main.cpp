@@ -16,6 +16,7 @@
 #pragma GCC diagnostic pop
 
 #include <iostream>
+#include <functional>
 
 #include "colorManipulation.hpp"
 
@@ -28,104 +29,179 @@ struct Circle
     Color c;
 };
 
+struct Slider
+{
+    size_t maxValue;
+    Circle pointer;
+    Rectangle zone;
+
+    int varLocation;
+    float valValue = 0;
+};
+
 int main()
 {
-    //Vars
+    // Vars
     Image img = LoadImage("test.png");
 
+    const size_t imageWidth = img.width, imageHeight = img.height;
     constexpr size_t widthUtils = 200;
-    const size_t windowWidth = img.width, windowHeight = img.height;
-    const size_t px = 15, py = 10;
-    const size_t elemPadd = 20;
-    float redShift = 0.f;
+    constexpr size_t px = 15, py = 15;
+    constexpr size_t elemPaddX = 30, elemPaddY = 3 * py;
+    const size_t windowWidth = imageWidth + widthUtils, windowHeight = imageHeight;
 
-    InitWindow(windowWidth + widthUtils, img.height, "Image Viewer");
+    InitWindow(windowWidth, img.height, "Image Viewer");
     SetTargetFPS(60);
 
-    //Shaders
+    // Shaders
     Texture2D texture = LoadTextureFromImage(img);
-    Shader shader = LoadShader(0, "shaders/interestingPattern.fs");
+    UnloadImage(img);
 
-    int redShiftLoc = GetShaderLocation(shader, "redShift");
-    if (redShiftLoc == -1)
+    RenderTexture2D target = LoadRenderTexture(windowWidth, imageHeight);
+
+    Shader shader = LoadShader(0, "shaders/effects.fs");
+    int redAddLoc = GetShaderLocation(shader, "redAdd");
+    int greenAddLoc = GetShaderLocation(shader, "greenAdd");
+    int blueAddLoc = GetShaderLocation(shader, "blueAdd");
+    int redShiftXLoc = GetShaderLocation(shader, "redShiftX");
+    int blueShiftXLoc = GetShaderLocation(shader, "blueShiftX");
+    int greenShiftXLoc = GetShaderLocation(shader, "greenShiftX");
+    
+    int redShiftYLoc = GetShaderLocation(shader, "redShiftY");
+    int blueShiftYLoc = GetShaderLocation(shader, "blueShiftY");
+    int greenShiftYLoc = GetShaderLocation(shader, "greenShiftY");
+
+    if (redAddLoc == -1 || greenAddLoc == -1 || blueAddLoc == -1 || blueShiftXLoc == -1 || greenShiftXLoc == -1 || redShiftXLoc == -1 
+        || blueShiftYLoc == -1 || greenShiftYLoc == -1 || redShiftYLoc == -1)
     {
-        std::cerr << "Shader uniform redShift not found\n";
+        std::cerr << "Shader uniform not found\n";
     }
 
-    //Drawables
-    Rectangle slider{px, py, 5, 255};
-    Circle c{px + slider.width / 2, py + slider.height, 10, RED};
+    // Drawables
+    constexpr size_t maxSliders = 9;
+    std::array<Slider, maxSliders> sliders;
 
-    bool isSelected = false;
+    Rectangle sliderPatR{px, py, 5, 255};
+    Circle circlePatR{px + sliderPatR.width / 2, sliderPatR.y + sliderPatR.height, 10, RED};
+    
+    Rectangle sliderPatG{sliderPatR.x + sliderPatR.width + elemPaddX, py, 5, 255};
+    Circle circlePatG{sliderPatG.x + sliderPatG.width / 2, sliderPatG.y + sliderPatG.height, 10, GREEN};
+
+    Rectangle sliderPatB{sliderPatG.x + sliderPatG.width + elemPaddX, py, 5, 255};
+    Circle circlePatB{sliderPatB.x + sliderPatB.width / 2, sliderPatB.y + sliderPatB.height, 10, BLUE};
+
+    sliders[0] = {255, circlePatR, sliderPatR, redAddLoc};
+    sliders[1] = {255, circlePatG, sliderPatG, greenAddLoc};
+    sliders[2] = {255, circlePatB, sliderPatB, blueAddLoc};
+
+    const float currentY = elemPaddY + sliderPatR.height + sliderPatR.y;
+    
+    //X axis
+    Rectangle sliderShiftR{px, elemPaddY + sliderPatR.height + sliderPatR.y, 5, 500};
+    Circle circleShiftR{px + sliderShiftR.width / 2, sliderShiftR.y + sliderShiftR.height, 10, RED};
+    
+    Rectangle sliderShiftG{sliderShiftR.x + sliderShiftR.width + elemPaddX, elemPaddY + sliderPatR.height + sliderPatR.y, 5, 500};
+    Circle circleShiftG{sliderShiftG.x + sliderShiftG.width / 2, sliderShiftG.y + sliderShiftG.height, 10, GREEN};
+    
+    Rectangle sliderShiftB{sliderShiftG.x + sliderShiftG.width + elemPaddX, elemPaddY + sliderPatG.height + sliderPatG.y, 5, 500};
+    Circle circleShiftB{sliderShiftB.x + sliderShiftB.width / 2, sliderShiftB.y + sliderShiftB.height, 10, BLUE};
    
+
+    //Y axis
+    Rectangle sliderShiftRY{sliderShiftB.x + sliderShiftB.width + elemPaddX, currentY, 5, 500};
+    Circle circleShiftRY{sliderShiftRY.x + sliderShiftRY.width / 2, sliderShiftRY.y + sliderShiftRY.height, 10, RED};
+   
+    Rectangle sliderShiftGY{sliderShiftRY.x + sliderShiftRY.width + elemPaddX, currentY, 5, 500};
+    Circle circleShiftGY{sliderShiftGY.x + sliderShiftGY.width / 2, sliderShiftGY.y + sliderShiftGY.height, 10, GREEN};
+   
+    Rectangle sliderShiftBY{sliderShiftGY.x + sliderShiftGY.width + elemPaddX, currentY, 5, 500};
+    Circle circleShiftBY{sliderShiftBY.x + sliderShiftBY.width / 2, sliderShiftBY.y + sliderShiftBY.height, 10, BLUE};
+
+    
+
+    sliders[3] = {500, circleShiftR, sliderShiftR, redShiftXLoc};
+    sliders[4] = {500, circleShiftG, sliderShiftG, greenShiftXLoc};
+    sliders[5] = {500, circleShiftB, sliderShiftB, blueShiftXLoc};
+    
+    sliders[6] = {500, circleShiftRY, sliderShiftRY, redShiftYLoc};
+    sliders[7] = {500, circleShiftGY, sliderShiftGY, greenShiftYLoc};
+    sliders[8] = {500, circleShiftBY, sliderShiftBY, blueShiftYLoc};
+    
+    Slider *selected = nullptr;
 
     while (!WindowShouldClose())
     {
-
-        // if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-        // {
-        //     redShift += 0.1f;
-
-        //     if (redShift > 1.f)
-        //     {
-        //         redShift = 0.f;
-        //     }
-
-        //     SetShaderValue(shader, redShiftLoc, &redShift, SHADER_UNIFORM_FLOAT);
-        // }
-
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             const Vector2 mpos = GetMousePosition();
-            if (CheckCollisionPointCircle(mpos, {c.cx, c.cy}, c.radius) || CheckCollisionPointRec(mpos, slider))
+
+            for (auto &slider : sliders)
             {
-                isSelected = true;
-            }
-            else
-            {
-                isSelected = false;
+                if (CheckCollisionPointCircle(mpos, {slider.pointer.cx, slider.pointer.cy}, slider.pointer.radius) || CheckCollisionPointRec(mpos, slider.zone))
+                {
+                    selected = &slider;
+                }
             }
         }
 
-        if (isSelected)
+        if (IsKeyPressed(KEY_S))
         {
+            Image image = LoadImageFromTexture(target.texture);
+            ExportImage(image, "output.png");
+            UnloadImage(image); 
+        }
 
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
+            selected = nullptr;
+        }
+
+        if (selected)
+        {
             const auto &[mx, my] = GetMousePosition();
-            // std::cout << mx << '|' << my << '\n';
-            if (my > py + 255)
+            const size_t max = selected->zone.y + selected->zone.height;
+            if (my > max)
             {
-                c.cy = py + 255;
+                selected->pointer.cy = max;
             }
-            else if (my < py)
+            else if (my < selected->zone.y)
             {
-                c.cy = py;
+                selected->pointer.cy = selected->zone.y;
             }
             else
             {
-                c.cy = my;
+                selected->pointer.cy = my;
             }
 
-            redShift = (c.cy - py) / 255;
-            SetShaderValue(shader, redShiftLoc, &redShift, SHADER_UNIFORM_FLOAT);
-
+            // std::cout << (selected->pointer.cy - selected->zone.y)  << '\n';
+            selected->valValue = 1 - (selected->pointer.cy - selected->zone.y) / selected->maxValue;
+            SetShaderValue(shader, selected->varLocation, &selected->valValue, SHADER_UNIFORM_FLOAT);
         }
 
         BeginDrawing();
         ClearBackground(BLACK);
-        DrawRectangleLines(0, 0, widthUtils, windowHeight, WHITE);
+        DrawRectangleLines(0, 0, widthUtils, imageHeight, WHITE);
+
+        BeginTextureMode(target);
+        DrawTexture(texture, widthUtils, 0, WHITE);
+        EndTextureMode();
 
         BeginShaderMode(shader);
-        DrawTexture(texture, 0 + widthUtils, 0, WHITE);
+        DrawTextureRec(target.texture, {0, 0, static_cast<float>(windowWidth), -static_cast<float>(imageHeight)}, {0, 0}, WHITE);
         EndShaderMode();
 
-        DrawRectangleRec(slider, WHITE);
-        DrawCircle(c.cx, c.cy, c.radius, c.c);
-        DrawText(std::to_string(static_cast<int>(redShift * 255)).c_str(), px + slider.width + elemPadd, py + slider.height / 2, 20, WHITE);
+        for (const auto &slider : sliders)
+        {
+            DrawRectangleRec(slider.zone, WHITE);
+            DrawCircle(slider.pointer.cx, slider.pointer.cy, slider.pointer.radius, slider.pointer.c);
+            //TODO: Make the px - 5 to be actually dynamic in regard to number of digits
+            DrawText(std::to_string(static_cast<int>(slider.valValue * slider.maxValue)).c_str(), slider.zone.x - 5, slider.zone.y + slider.zone.height + py, 20, WHITE);
+        }
+
         EndDrawing();
     }
 
     UnloadShader(shader);
-    UnloadImage(img);
     UnloadTexture(texture);
     CloseWindow();
 }
