@@ -183,12 +183,12 @@ int main()
         DrawRectangleLines(0, 0, widthUtils, imageHeight, WHITE);
 
         BeginTextureMode(target);
-        DrawTexture(texture, widthUtils, 0, WHITE);
+            BeginShaderMode(shader);
+                DrawTexture(texture, widthUtils, 0, WHITE);
+            EndShaderMode();
         EndTextureMode();
 
-        BeginShaderMode(shader);
         DrawTextureRec(target.texture, {0, 0, static_cast<float>(windowWidth), -static_cast<float>(imageHeight)}, {0, 0}, WHITE);
-        EndShaderMode();
 
         for (const auto &slider : sliders)
         {
