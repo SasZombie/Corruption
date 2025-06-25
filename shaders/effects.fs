@@ -3,7 +3,13 @@
 in vec2 fragTexCoord;
 out vec4 fragColor;
 
+
 uniform sampler2D texture0;
+uniform sampler2D maskTexture;
+
+uniform float on;
+uniform float displayMask;
+
 uniform float redAdd;
 uniform float greenAdd;
 uniform float blueAdd;
@@ -17,8 +23,7 @@ uniform float greenShiftY;
 uniform float blueShiftX;
 uniform float blueShiftY;
 
-
-void main()
+vec4 applyEffects()
 {
     vec4 color = texture(texture0, fragTexCoord);
 
@@ -50,6 +55,29 @@ void main()
     color.r = addedRed;
     color.g = addedGreen;
     color.b = addedBlue;
+
+    return color;
+}
+
+void main()
+{
+    float maskValue = texture(maskTexture, fragTexCoord).r;
+    vec4 color = texture(texture0, fragTexCoord);
+
+    if(displayMask < 0.5f)
+    {
+        bool applyGlobally = (on < 0.5);
+        bool applyMasked   = (on > 0.5 && maskValue > 0.99);
+
+        if (applyGlobally || applyMasked)
+        {
+            color = applyEffects();
+        }
+    }else
+    {
+        color = vec4(maskValue, 0, 0, 1);
+    }
+
 
     fragColor = color;
 }
