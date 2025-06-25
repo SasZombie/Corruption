@@ -28,7 +28,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     set(PLATFORM_LIBS raylib winmm gdi32)
 
-#I am lazy to do this for linux
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(STATUS "Target platform: Linux")
 
@@ -36,20 +35,13 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
     if(STATIC_BUILD)
         message(STATUS "Static build enabled")
-
-        # Static linking for GCC on Linux
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
 
-        # Optionally prefer static libraries
         set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
-
-        # Embed shaders
         target_compile_definitions(main PRIVATE bakedShaders)
 
-        # Set libraries needed for raylib (statically)
         set(PLATFORM_LIBS raylib m pthread X11 GL dl rt)
     else()
-        # With sanitizers, only dynamic linking works well
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined,leak")
         set(PLATFORM_LIBS raylib m pthread X11 GL dl)
     endif()
