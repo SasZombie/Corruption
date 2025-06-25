@@ -3,21 +3,14 @@
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #pragma GCC diagnostic ignored "-Wcast-qual"
 #pragma GCC diagnostic ignored "-Wmissing-declarations"
-#define RAYGUI_IMPLEMENTATION
 #include "raylib.h"
-#include "raygui.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 
 #pragma GCC diagnostic pop
 
 #include <iostream>
 #include <functional>
 
+#include "shaderEmbeded.hpp"
 #include "colorManipulation.hpp"
 
 struct Circle
@@ -70,7 +63,6 @@ int main()
     constexpr size_t elemPaddX = 30, elemPaddY = 3 * py;
     unsigned char *mask = nullptr;
 
-
     const int gx[3][3] = {
         {-1, 0, 1},
         {-2, 0, 2},
@@ -88,7 +80,12 @@ int main()
     Texture2D texture, maskTexture;
     RenderTexture2D target;
 
+#ifdef bakedShaders
+    Shader shader = LoadShaderFromMemory(NULL, effects_shader);
+#else
     Shader shader = LoadShader(0, "shaders/effects.fs");
+#endif
+
     int redAddLoc = GetShaderLocation(shader, "redAdd");
     int greenAddLoc = GetShaderLocation(shader, "greenAdd");
     int blueAddLoc = GetShaderLocation(shader, "blueAdd");
