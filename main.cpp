@@ -58,6 +58,7 @@ int main()
     int imgComponents = 0;
     size_t windowWidth = 800, windowHeight = 600;
     size_t imgWidth = 800, imgHeight = 600;
+    constexpr size_t minUIHeight = 900;
     constexpr size_t widthUtils = 230;
     constexpr size_t px = 15, py = 15;
     constexpr size_t elemPaddX = 30, elemPaddY = 3 * py;
@@ -177,7 +178,7 @@ int main()
                 imgWidth = img.width;
                 imgHeight = img.height;
 
-                windowHeight = img.height;
+                windowHeight = (img.height > minUIHeight) ? img.height : minUIHeight;;
                 windowWidth = img.width + widthUtils;
                 imgComponents = getImageChannelCount(img.format);
 
